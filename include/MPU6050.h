@@ -1,3 +1,13 @@
+/*
+MPU 6050 I2C Device Driver
+Author - Himon Koch
+*/
+
+
+
+#include <stdint.h>
+#include <Wire.h>
+
 /*---- SELF TEST REGISTERS --------------------*/
 #define SELF_TEST_X         0x0D
 #define SELF_TEST_Y         0x0E
@@ -98,7 +108,83 @@
 #define FIFO_R_W            0x74
 #define WHO_AM_I            0x75
 
+#define MPU6050_ADDR        0x68
+
+
+#define DEVICE_RESET_NOSLEEP_NOCYCLE 0x80
+#define INIT_GYRO_SELF_TEST      0x1F
+
+enum returntype
+{
+    SUCCESS,
+    FAILURE
+};
+
 class mpu6050_base{
     public:
-        void initialize();
-}
+        // initialise function - start I2C comm, confirm WHO_AM_I address value
+        mpu6050_base();
+
+        // public function to self test Gyro
+        returntype selftest_gyro();
+
+        // public function to read WHO_AM_I register to verify I2C communication
+        returntype verify_slave_communication();
+
+        // functions to configure interrupt behaviour -> INT_PIN_CFG
+        //      function to enable FSYNC pin to send interrupt to host
+        //      various macros defining INT_LEVEL, INT_OPEN, LATCH_INT_EN, INT_RD_CLEAR, FSYNC_INT_LEVEL values
+    
+        // public functions to read accelerometer readings from ACCEL_XOUT_H, etc registers
+
+        // public functions to read temperature sensors readings from TEMP_OUT_H and TEMP_OUT_L registers
+
+        // public functios to reading gyro readings from GYRO_XOUT_H, etc registers
+        void read_gyro(uint16_t *x_val, uint16_t *y_val, uint16_t *z_val);
+
+        // public (tentative) function to read external sensor data
+
+        // public function to enable and disable FIFO buffer -> USER_CTRL
+
+        // public function to enable and disable primary I2C bus -> USER_CTRL
+
+        // public function to reset FIFO, I2C master and SIG_COND_RESET -> USER_CTRL
+
+        // public function to disable temp sensor -> PWR_MGMT_1
+
+        // public function to configure sleep mode -> PWR_MGMT_1 and LP_WAKE_CTRL(PWR_MGMT_2)
+
+        // public function to reset the entire MPU -> PWR_MGMT_1
+
+        // public function to specify clock source -> PWR_MGMT_1
+
+        // public function to put individual axes of gyro and accelerometer on stand by
+
+        // public function to read FIFO count
+
+        // public function to read and write FIFO buffer
+
+    private:
+        bool initialized;
+
+        // private fubnction to read from registers
+        int read_register(uint8_t register_addr);
+
+        // private function to write into a register
+        void write_register(uint8_t register_addr, uint8_t data);
+
+        // [tentative] function to change  SMPLRT_DIV value
+
+        // function to change CONFIG value based on individual situations (maybe multiple functions) (private functions for sure)
+
+        // private function to enable FIFO
+
+        // private function to configure auxiliary I2C bus -> I2C_MST_CTRL
+
+        // private functions to configure individual slave i2c nodes if aux i2c bus is used -> I2C_SLV0_ADDR, I2C_SLV0_REG, and I2C_SLV0_CTRL
+
+        // function to configure interrupt enables in case of fifo overflow, I2C_MST_INT_EN and data ready state
+
+        // private funciton to read WHO_AM_I register to be used during configuration
+
+};
