@@ -3,10 +3,11 @@ MPU 6050 I2C Device Driver
 Author - Himon Koch
 */
 
-
-
 #include <stdint.h>
-#include <Wire.h>
+
+
+#ifndef MPU6050_H
+#define MPU6050_H
 
 /*---- SELF TEST REGISTERS --------------------*/
 #define SELF_TEST_X         0x0D
@@ -110,141 +111,36 @@ Author - Himon Koch
 
 #define MPU6050_ADDR        0x68
 
+typedef uint8_t reg_addr_t;
 
-#define DEVICE_RESET_NOSLEEP_NOCYCLE 0x80
-#define INIT_GYRO_SELF_TEST      0x1F
-
-
-// Gyroscope sensitivity values
-typedef enum 
-{
-    GYRO_FULLRANGE_250 = 0x00,
-    GYRO_FULLRANGE_500 = 0x08,
-    GYRO_FULLRANGE_1K  = 0x10,
-    GYRO_FULLRANGE_2K  = 0x18
-} gyro_range_t;
+/*---- RETURN TYPE ENUM -----------------------*/
+typedef enum {
+  SUCCESS = 0,
+  COMM_FAILURE = 1
+} returntype_t;
 
 
-// Accelerometer sensitivity values
-typedef enum 
-{
-    ACCL_FULLRANGE_2G  = 0x00,
-    ACCL_FULLRANGE_4G  = 0x08,
-    ACCL_FULLRANGE_8G  = 0x10,
-    ACCL_FULLRANGE_16G = 0x18
-} accel_range_t;
+class mpu6050_base {
 
+public:
 
-// Clock Configuration values
-typedef enum
-{
-    CLK_SEL_INTERNAL    = 0x00,
-    CLK_SEL_XGYRO       = 0x01,
-    CLK_SEL_YGYRO       = 0x02,
-    CLK_SEL_ZGYRO       = 0x03,
-    CLK_SEL_EXT32       = 0x04,
-    CLK_SEL_EXT19       = 0x05,
-    STOP_CLK_RESET      = 0x07
-} clk_sel_t;
+// CONSTRUCTOR
+  mpu6050_base();
 
+// function to verify i2c communication between host and slave
+  returntype_t verify_comm();
 
-// DLPF Configuration values (refer the MPU6050 register map manual for more details on DLPF CFG)
-typedef enum
-{
-    DLPF_CFG_0 = 0x00,
-    DLPF_CFG_1 = 0x01,
-    DLPF_CFG_2 = 0x02,
-    DLPF_CFG_3 = 0x03,
-    DLPF_CFG_4 = 0x04,
-    DLPF_CFG_5 = 0x05,
-    DLPF_CFG_6 = 0x06,
-} dlpf_cfg_t;
+private:
+  bool initialized = false;
 
-enum returntype
-{
-    SUCCESS,
-    FAILURE
+// function to read a single byte from a register
+  uint8_t reg_read(reg_addr_t);
+
+// function to write a single byte into a register
+  uint8_t reg_wite(reg_addr_t, uint8_t);
+  
 };
 
-class mpu6050_base{
-    public:
-        // initialise function - start I2C comm, confirm WHO_AM_I address value
-        mpu6050_base(clk_sel_t, dlpf_cfg_t);
-
-        // public function to self test Gyro
-        returntype selftest_gyro();
-
-        // public function to read WHO_AM_I register to verify I2C communication
-        returntype verify_slave_communication();
-
-        // functions to configure interrupt behaviour -> INT_PIN_CFG
-        //      function to enable FSYNC pin to send interrupt to host
-        //      various macros defining INT_LEVEL, INT_OPEN, LATCH_INT_EN, INT_RD_CLEAR, FSYNC_INT_LEVEL values
-
-        // public functions to read temperature sensors readings from TEMP_OUT_H and TEMP_OUT_L registers
-
-        // public functios to reading gyro readings from GYRO_XOUT_H, etc registers
-        void read_gyro(uint16_t *x_val, uint16_t *y_val, uint16_t *z_val);
-
-        // public functios to reading accelerometer readings from ACCEL_XOUT_H, etc registers
-        void read_accel(uint16_t *x_val, uint16_t *y_val, uint16_t *z_val);
-
-        // public function to initiate the GYRO sensor for measurement
-        returntype gyro_setup(int rate, gyro_range_t range);
-
-        // public function to initiate the ACCELEROMETER sensor for measurement
-        returntype accl_setup(int rate, accel_range_t range);
-
-        // public (tentative) function to read external sensor data
-
-        // public function to enable and disable FIFO buffer -> USER_CTRL
-
-        // public function to enable and disable primary I2C bus -> USER_CTRL
-
-        // public function to reset FIFO, I2C master and SIG_COND_RESET -> USER_CTRL
-
-        // public function to disable temp sensor -> PWR_MGMT_1
-
-        // public function to configure sleep mode -> PWR_MGMT_1 and LP_WAKE_CTRL(PWR_MGMT_2)
 
 
-
-        // public function to put individual axes of gyro and accelerometer on stand by
-
-    private:
-        bool initialized = false;
-        gyro_range_t gyro_range = GYRO_FULLRANGE_250;
-        accel_range_t accl_range = ACCL_FULLRANGE_2G;
-        clk_sel_t clk_config = CLK_SEL_INTERNAL;
-        dlpf_cfg_t dlpf_cfg = DLPF_CFG_0;
-
-        // private fubnction to read from registers
-        int read_register(uint8_t register_addr);
-
-        // private function to write into a register
-        void write_register(uint8_t register_addr, uint8_t data);
-
-        // [tentative] function to change  SMPLRT_DIV value
-        returntype set_sample_rate(int rate);
-
-        // function to change CONFIG value based on individual situations (maybe multiple functions) (private functions for sure)
-        // private function to configure GYRO settings
-        returntype set_gyro_sensitivity(gyro_range_t range);
-
-        // private function to configure ACCL settings
-        returntype set_accl_sensitivity(accel_range_t range);
-
-        // private function to configure auxiliary I2C bus -> I2C_MST_CTRL
-
-        // private functions to configure individual slave i2c nodes if aux i2c bus is used -> I2C_SLV0_ADDR, I2C_SLV0_REG, and I2C_SLV0_CTRL
-
-        // function to configure interrupt enables in case of fifo overflow, I2C_MST_INT_EN and data ready state
-
-        // private function to specify clock source -> PWR_MGMT_1
-        void clock_config(clk_sel_t);
-
-        // private function to config the Digital Low Pass Filter
-        void dlpf_config(dlpf_cfg_t);
-
-        // private function to reset the entire MPU -> PWR_MGMT_1
-};
+#endif
